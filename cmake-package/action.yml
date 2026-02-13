@@ -1,0 +1,13 @@
+name: CMake Package
+description: Package on a target using a CMake package preset
+inputs:
+  preset_name:
+    description: 'Name of the package preset'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Package
+      shell: bash
+      run: cpack --preset ${{ inputs.preset_name }}

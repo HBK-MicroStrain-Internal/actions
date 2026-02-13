@@ -1,0 +1,23 @@
+name: Archive JUNIT test results
+description: Upload JUNIT test results as artifacts for analysis
+inputs:
+  path:
+    description: 'Path to the test result file relative to the project root'
+    default: 'build/**'
+  file_name:
+    description: 'Test results file name or regex pattern with extension'
+    default: '*test-results*.xml'
+  display_name:
+    description: 'Display name for the test results step. This will be prepended with Test Results'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Test Results
+      uses: dorny/test-reporter@v1
+      with:
+        name: Test Results ${{ inputs.display_name }}
+        path: '${{ inputs.path }}/${{ inputs.file_name }}'
+        reporter: java-junit
+        fail-on-error: 'false'

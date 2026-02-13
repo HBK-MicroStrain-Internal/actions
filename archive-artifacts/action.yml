@@ -1,0 +1,22 @@
+name: Archive Artifacts
+description: Archive build artifacts
+inputs:
+  path:
+    description: 'Path to the artifacts relative to the project root'
+    default: 'packages/**'
+  file_name:
+    description: 'Artifact file name(s) or regex pattern with extension'
+    default: '*'
+  display_name:
+    description: 'Display name for the archiving step'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: Upload ${{ inputs.display_name }} Artifacts
+        path: '${{ inputs.path }}/${{ inputs.file_name }}'
+        if-no-files-found: error

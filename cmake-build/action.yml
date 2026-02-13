@@ -1,0 +1,16 @@
+name: CMake Build
+description: Build a target using a CMake build preset
+inputs:
+  preset_name:
+    description: 'Name of the build preset'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Build
+      shell: bash
+      run: |
+        cmake --build \
+          --preset ${{ inputs.preset_name }} \
+          --parallel ${NUMBER_OF_PROCESSORS:-$(nproc 2>/dev/null || echo 4)}

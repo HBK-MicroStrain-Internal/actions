@@ -1,0 +1,16 @@
+name: CMake Test
+description: Run Ctest on a target using a CMake test preset
+inputs:
+  preset_name:
+    description: 'Name of the test preset'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Test
+      shell: bash
+      run: |
+        ctest \
+          --preset ${{ inputs.preset_name }} \
+          --parallel ${NUMBER_OF_PROCESSORS:-$(nproc 2>/dev/null || echo 4)}
