@@ -18,7 +18,8 @@ runs:
       id: artifact-naming
       shell: bash
       run: |
-        files=(${{ inputs.path }}/${{ inputs.file_name }})
+        shopt -s nullglob
+        files=(${{ github.workspace }}/${{ inputs.path }}/${{ inputs.file_name }})
         count=${#files[@]}
         if [ $count -eq 1 ]; then
           artifact_name=$(basename "${files[0]}")
