@@ -1,0 +1,13 @@
+name: CMake Configure
+description: Configure a project using a CMake configure preset
+inputs:
+  preset_name:
+    description: 'Name of the configure preset'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Configure
+      shell: bash
+      run: cmake --preset ${{ inputs.preset_name }}
