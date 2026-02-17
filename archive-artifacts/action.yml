@@ -24,7 +24,7 @@ runs:
         if [ $count -eq 1 ]; then
           artifact_name=$(basename "${files[0]}")
         else
-          artifact_name="${{ inputs.display_name }}"
+          artifact_name="${{ inputs.artifact_name }}"
         fi
         echo "artifact_name=$artifact_name" >> $GITHUB_OUTPUT
 
