@@ -19,13 +19,17 @@ runs:
       shell: bash
       run: |
         shopt -s nullglob
+
         files=(${{ github.workspace }}/${{ inputs.path }}/${{ inputs.file_name }})
+
         count=${#files[@]}
+
         if [ $count -eq 1 ]; then
           artifact_name=$(basename "${files[0]}")
         else
           artifact_name="${{ inputs.artifact_name }}"
         fi
+
         echo "artifact_name=$artifact_name" >> $GITHUB_OUTPUT
 
     - name: Upload Artifacts
