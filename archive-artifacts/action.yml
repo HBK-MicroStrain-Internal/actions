@@ -3,12 +3,15 @@ description: Archive build artifacts
 inputs:
   path:
     description: 'Path to the artifacts relative to the project root'
+    type: string
     default: 'packages'
   file_name:
     description: 'Artifact file name(s) or regex pattern with extension. Use comma to separate multiple patterns'
+    type: string
     default: '*'
   artifact_name:
     description: 'Fallback artifact name for the archiving step'
+    type: string
     required: true
 
 runs:
@@ -18,9 +21,16 @@ runs:
       id: artifact-pattern
       shell: bash
       run: |
+        path="${{ inputs.path }}"
+        
+        if [[ -z "$path" ]]; then
+          echo "Using fallback artifact path 'packages'"
+          path="packages"
+        fi
+        
         # 1. Convert comma to newline
         # 2. Prepend the directory to each line
-        path_patterns=$(echo "${{ inputs.file_name }}" | tr ',' '\n' | sed "s|^|${{ inputs.path }}/|")
+        path_patterns=$(echo "${{ inputs.file_name }}" | tr ',' '\n' | sed "s|^|$path/|")
 
         # Generate a multi-line string
         {
