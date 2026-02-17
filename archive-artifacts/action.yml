@@ -3,7 +3,7 @@ description: Archive build artifacts
 inputs:
   path:
     description: 'Path to the artifacts relative to the project root'
-    default: 'packages/**'
+    default: 'packages'
   file_name:
     description: 'Artifact file name(s) or regex pattern with extension. Use comma to separate multiple patterns'
     default: '*'
