@@ -20,7 +20,7 @@ runs:
       run: |
         # 1. Convert comma to newline
         # 2. Prepend the directory to each line
-        path_pattern=$(echo "${{ inputs.file_name }}" | tr ',' '\n' | sed "s|^|${{ inputs.path }}/|")
+        path_patterns=$(echo "${{ inputs.file_name }}" | tr ',' '\n' | sed "s|^|${{ inputs.path }}/|")
 
         # Generate a multi-line string
         {
@@ -35,11 +35,16 @@ runs:
       run: |
         # Default no found matches to null instead of returning the search pattern
         shopt -s nullglob
+        
+        # Enable globstar for ** search patterns
+        shopt -s globstar
 
         # Convert the multi-line string output back into a Bash array
         # This handles the globbing automatically
-        mapfile -t patterns <<< "${{ steps.artifact-pattern.outputs.path_patterns }}"
-        files=(${patterns[@]})
+        patterns_str="${{ steps.artifact-pattern.outputs.path_patterns }}"
+        
+        # Convert to actual file names
+        files=($patterns_str)
 
         # Get a file count
         count=${#files[@]}
@@ -58,5 +63,7 @@ runs:
       uses: actions/upload-artifact@v4
       with:
         name: ${{ steps.artifact-naming.outputs.artifact_name }}
-        path:  ${{ steps.artifact-pattern.outputs.path_patterns }}
+        # Ensure newlines are treated as such with a pipe
+        path: |
+          ${{ steps.artifact-pattern.outputs.path_patterns }}
         if-no-files-found: error
