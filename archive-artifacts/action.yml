@@ -5,7 +5,7 @@ inputs:
     description: 'Path to the artifacts relative to the project root'
     default: 'packages/**'
   file_name:
-    description: 'Artifact file name(s) or regex pattern with extension'
+    description: 'Artifact file name(s) or regex pattern with extension. Use comma to separate multiple patterns'
     default: '*'
   artifact_name:
     description: 'Fallback artifact name for the archiving step'
@@ -14,19 +14,41 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Calculate Artifact Name
+    - name: Determine Artifact Search Pattern
+      id: artifact-pattern
+      shell: bash
+      run: |
+        # 1. Convert comma to newline
+        # 2. Prepend the directory to each line
+        path_pattern=$(echo "${{ inputs.file_name }}" | tr ',' '\n' | sed "s|^|${{ inputs.path }}/|")
+
+        # Generate a multi-line string
+        {
+          echo "path_patterns<<EOF"
+          echo "$path_patterns"
+          echo "EOF"
+        } >> "$GITHUB_OUTPUT"
+
+    - name: Determine Artifact Name
       id: artifact-naming
       shell: bash
       run: |
+        # Default no found matches to null instead of returning the search pattern
         shopt -s nullglob
 
-        files=(${{ github.workspace }}/${{ inputs.path }}/${{ inputs.file_name }})
+        # Convert the multi-line string output back into a Bash array
+        # This handles the globbing automatically
+        mapfile -t patterns <<< "${{ steps.artifact-pattern.outputs.path_patterns }}"
+        files=(${patterns[@]})
 
+        # Get a file count
         count=${#files[@]}
 
         if [ $count -eq 1 ]; then
+          # Only 1 file, use the file name
           artifact_name=$(basename "${files[0]}")
         else
+          # Multiple files, use the provided artifact name
           artifact_name="${{ inputs.artifact_name }}"
         fi
 
@@ -36,5 +58,5 @@ runs:
       uses: actions/upload-artifact@v4
       with:
         name: ${{ steps.artifact-naming.outputs.artifact_name }}
-        path: '${{ inputs.path }}/${{ inputs.file_name }}'
+        path:  ${{ steps.artifact-pattern.outputs.path_patterns }}
         if-no-files-found: error
