@@ -1,10 +1,37 @@
 name: Checkout
-description: Checkout the repository with recursive submodules
+description: Checkout the repository with recursive submodules and optional GitHub App support
+
+inputs:
+  app_id:
+    description: GitHub App ID for private dependencies
+    type: string
+
+  app_private_key:
+    description: GitHub App private key for private dependencies
+    type: string
 
 runs:
   using: "composite"
   steps:
-    - name: Checkout
+    - name: "Generate GitHub App Token"
+      id: app-token
+      if: ${{ inputs.app_id != '' && inputs.app_private_key != '' }}
+      uses: actions/create-github-app-token@v1
+      with:
+        app-id: ${{ inputs.app_id }}
+        private-key: ${{ inputs.app_private_key }}
+
+    - name: "Configure Git For Private Dependencies"
+      if: ${{ inputs.app_id != '' && inputs.app_private_key != '' }}
+      shell: bash
+      run: |
+        # Mask the token
+        echo "::add-mask::${{ steps.app-token.outputs.token }}"
+        
+        # Configure the GitHub App token for private dependencies
+        git config --global url."https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/".insteadOf "https://github.com/"
+
+    - name: "Checkout"
       uses: actions/checkout@v4
       with:
         submodules: recursive
