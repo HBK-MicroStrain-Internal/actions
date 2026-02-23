@@ -1,0 +1,20 @@
+# Nothing is allowed in this project aside from the exceptions below
+/*
+
+# The .gitignore is allowed
+!/.gitignore
+
+# The README is allowed
+!/README.md
+
+# Only actions and action READMEs in the respective action directory are allowed
+
+# Any directory is allowed (composite action directories)
+!/*/
+# Ignore all content in those directories
+/*/*
+# Allow only the action definition and README in each action directory
+!/*/action.yml
+!/*/README.md
+# No subdirectories within action directories
+/*/*/
