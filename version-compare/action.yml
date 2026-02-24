@@ -1,0 +1,152 @@
+name: Version Compare
+description: Compare semantic versions I.E 1.2.3
+
+inputs:
+  version_lhs:
+    description: Left hand version for comparison
+    type: string
+    required: true
+
+  version_rhs:
+    description: Right hand version for comparison
+    type: string
+    required: true
+
+  equal:
+    description: If true, the action will only succeed if lhs == rhs
+    type: boolean
+    required: false
+    default: false
+
+  not_equal:
+    description: If true, the action will only succeed if lhs != rhs
+    type: boolean
+    required: false
+    default: false
+
+  greater:
+    description: If true, the action will only succeed if lhs > rhs
+    type: boolean
+    required: false
+    default: false
+
+  greater_equal:
+    description: If true, the action will only succeed if lhs >= rhs
+    type: boolean
+    required: false
+    default: false
+
+  less:
+    description: If true, the action will only succeed if lhs < rhs
+    type: boolean
+    required: false
+    default: false
+
+  less_equal:
+    description: If true, the action will only succeed if lhs <= rhs
+    type: boolean
+    required: false
+    default: false
+
+runs:
+  using: "composite"
+  steps:
+    - name: "Compare"
+      shell: bash
+      run: |
+        # Extract semantic versions from inputs
+        lhs=$(grep -oP '\d+\.\d+\.\d+(\.\d+)?' <<< "${{ inputs.version_lhs }}")
+        rhs=$(grep -oP '\d+\.\d+\.\d+(\.\d+)?' <<< "${{ inputs.version_rhs }}")
+
+        # Split into arrays
+        IFS='.' read -r -a lhs_parts <<< "$lhs"
+        IFS='.' read -r -a rhs_parts <<< "$rhs"
+        
+        # Pad shorter array with zeros
+        while [ "${#lhs_parts[@]}" -lt "${#rhs_parts[@]}" ]; do
+          lhs_parts+=("0");
+        done
+        
+        while [ "${#rhs_parts[@]}" -lt "${#lhs_parts[@]}" ]; do
+          rhs_parts+=("0");
+        done
+        
+        # Compare segments and determine result (-1, 0, 1)
+        result=0
+        
+        for i in "${!lhs_parts[@]}"; do
+          if [ "${lhs_parts[$i]}" -gt "${rhs_parts[$i]}" ]; then
+            result=1;
+            break;
+          fi
+        
+          if [ "${lhs_parts[$i]}" -lt "${rhs_parts[$i]}" ]; then
+            result=-1;
+            break;
+          fi
+        done
+        
+        # Evaluate against requested checks
+        
+        if [ "${{ inputs.equal }}" = "true" ]; then
+          if [ "$result" -eq  0 ]; then
+            echo "Passed: $lhs == $rhs"
+            exit 0
+          else
+            echo "Failed: $lhs == $rhs"
+            exit 1
+          fi
+        fi
+        
+        if [ "${{ inputs.not_equal }}" = "true" ]; then
+          if [ "$result" -ne  0 ]; then
+            echo "Passed: $lhs != $rhs"
+            exit 0
+          else
+            echo "Failed: $lhs != $rhs"
+            exit 1
+          fi
+        fi
+        
+        if [ "${{ inputs.greater }}" = "true" ]; then
+          if [ "$result" -eq 1 ]; then
+            echo "Passed: $lhs > $rhs"
+            exit 0
+          else
+            echo "Failed: $lhs > $rhs"
+            exit 1
+          fi
+        fi
+        
+        if [ "${{ inputs.greater_equal }}" = "true" ]; then
+          if [ "$result" -ge 0 ]; then
+            echo "Passed: $lhs >= $rhs"
+            exit 0
+          else
+            echo "Failed: $lhs >= $rhs"
+            exit 1
+          fi
+        fi
+        
+        if [ "${{ inputs.less }}" = "true" ]; then
+          if [ "$result" -eq -1 ]; then
+            echo "Passed: $lhs < $rhs"
+            exit 0
+          else
+            echo "Failed: $lhs < $rhs"
+            exit 1
+          fi
+        fi
+        
+        if [ "${{ inputs.less_equal }}" = "true" ]; then
+          if [ "$result" -le 0 ]; then
+            echo "Passed: $lhs <= $rhs"
+            exit 0
+          else
+            echo "Failed: $lhs <= $rhs"
+            exit 1
+          fi
+        fi
+        
+        echo "Invalid inputs"
+        exit 1
