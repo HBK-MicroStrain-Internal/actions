@@ -1,0 +1,61 @@
+name: "PR Comment Status"
+description: "Updates PR comments with check status, removing old comments and adding failure comments if needed."
+
+inputs:
+  check_name:
+    description: "Unique header string to identify this check's comments"
+    type: string
+    required: true
+
+  failure_message:
+    description: "The message body to post on failure"
+    type: string
+    required: true
+
+  pr_id:
+    description: "Issue ID of the pull request"
+    required: true
+    type: number
+
+  check_passed:
+    description: "The passing status of the job"
+    type: boolean
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: "Find and remove failure comment on PR (if applicable)"
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const comments = await github.rest.issues.listComments({
+            issue_number: ${{ inputs.pr_id }},
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+          });
+          
+          const botComments = comments.data.filter(comment =>
+            comment.user.login === 'github-actions[bot]' &&
+            comment.body.includes("${{ inputs.check_name }}")
+          );
+          
+          for (const comment of botComments) {
+            await github.rest.issues.deleteComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: comment.id,
+            });
+          }
+
+    - name: "Comment on PR on failure (if applicable)"
+      if: inputs.check_passed == 'false'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          github.rest.issues.createComment({
+            issue_number: ${{ inputs.pr_id }},
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: "🚨 ${{ inputs.check_name }}\n\n${{ inputs.failure_message }}"
+          });
