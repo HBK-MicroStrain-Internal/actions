@@ -107,7 +107,7 @@ runs:
       uses: LouisBrunner/checks-action@v2.0.0
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
-        name: "${{ inputs.workflow_name }} / ${{ env.GITHUB_JOB_NAME }}"
+        name: "${{ env.GITHUB_JOB_NAME }}"
         conclusion: ${{ inputs.check_status }}
         sha: ${{ steps.fetch-sha.outputs.sha }}
 
