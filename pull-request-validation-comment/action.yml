@@ -27,17 +27,20 @@ runs:
   steps:
     - name: "Find and remove failure comment on PR (if applicable)"
       uses: actions/github-script@v7
+      env:
+        PR_ID: ${{ inputs.pr_id }}
+        BODY_HEADER: "${{ inputs.check_name }}"
       with:
         script: |
           const comments = await github.rest.issues.listComments({
-            issue_number: ${{ inputs.pr_id }},
+            issue_number: process.env.PR_ID,
             owner: context.repo.owner,
             repo: context.repo.repo,
           });
           
           const botComments = comments.data.filter(comment =>
             comment.user.login === 'github-actions[bot]' &&
-            comment.body.includes("${{ inputs.check_name }}")
+            comment.body.includes(process.env.BODY_HEADER)
           );
           
           for (const comment of botComments) {
@@ -51,11 +54,14 @@ runs:
     - name: "Comment on PR on failure (if applicable)"
       if: inputs.check_status == 'failure'
       uses: actions/github-script@v7
+      env:
+        PR_ID: ${{ inputs.pr_id }}
+        COMMENT_BODY: "🚨 ${{ inputs.check_name }}\n\n${{ inputs.failure_message }}"
       with:
         script: |
           github.rest.issues.createComment({
-            issue_number: ${{ inputs.pr_id }},
+            issue_number: process.env.PR_ID,
             owner: context.repo.owner,
             repo: context.repo.repo,
-            body: "🚨 ${{ inputs.check_name }}\n\n${{ inputs.failure_message }}"
+            body: process.env.COMMENT_BODY
           });
