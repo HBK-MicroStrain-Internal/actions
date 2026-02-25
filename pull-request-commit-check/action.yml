@@ -52,6 +52,8 @@ runs:
 
     - name: "Get HEAD Commit SHA"
       id: head-sha
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       shell: bash
       run: |
         sha=$(gh pr view ${{ steps.pr-metadata.outputs.id }} --json headRefOid -q '.headRefOid')
@@ -59,6 +61,8 @@ runs:
 
     - name: "Get BASE Commit SHA"
       id: base-sha
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       shell: bash
       run: |
         sha=$(gh pr view ${{ steps.pr-metadata.outputs.id }} --json baseRefOid -q '.baseRefOid')
