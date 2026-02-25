@@ -1,0 +1,99 @@
+name: "PR Commit Check Status"
+description: "Sets/Updates the check status of a commit for a pull request"
+
+inputs:
+  status:
+    description: "Status of the check. 'success', 'failure', 'in_progress'"
+    required: false
+    type: string
+    default: 'in_progress'
+
+outputs:
+  head_sha:
+    description: "The HEAD commit SHA for the pull request"
+    value: ${{ steps.head-sha.outputs.sha }}
+
+  base_sha:
+    description: "The BASE commit SHA for the pull request"
+    value: ${{ steps.base-sha.outputs.sha }}
+
+  pr_id:
+    description: "The ID of the pull request"
+    value: ${{ steps.pr-metadata.outputs.id }}
+
+  pr_owner:
+    description: "The owner of the pull request"
+    value: ${{ steps.pr-metadata.outputs.owner }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: "Get PR Metadata"
+      id: pr-metadata
+      shell: bash
+      run: |
+        id=0
+        owner=""
+
+        if [ "${{ github.event_name }}" = "pull_request" ]; then
+          id=${{ github.event.pull_request.number }}
+          owner="${{ github.event.pull_request.user.login }}"
+        elif [ "${{ github.event_name }}" = "issue_comment" ] &&
+             [ "${{ github.event.issue.pull_request }}" != "" ]; then
+          id=${{ github.event.issue.number }}
+          owner=${{ github.event.issue.user.login }}
+        else
+          echo "This action can only run for pull requests"
+          exit 1
+        fi
+
+        echo "id=$id" >> $GITHUB_OUTPUT
+        echo "owner=$owner" >> $GITHUB_OUTPUT
+
+    - name: "Get HEAD Commit SHA"
+      id: head-sha
+      shell: bash
+      run: |
+        sha=$(gh pr view ${{ steps.pr-metadata.outputs.id }} --json headRefOid -q '.headRefOid')
+        echo "sha=$sha" >> $GITHUB_OUTPUT
+
+    - name: "Get BASE Commit SHA"
+      id: base-sha
+      shell: bash
+      run: |
+        sha=$(gh pr view ${{ steps.pr-metadata.outputs.id }} --json baseRefOid -q '.baseRefOid')
+        echo "sha=$sha" >> $GITHUB_OUTPUT
+
+    - name: "Get Job Info"
+      # Makes an environment variable with the full job name: $GITHUB_JOB_NAME
+      uses: qoomon/actions--context@v5
+
+    - name: "Determine Status"
+      id: status
+      shell: bash
+      run: |
+        conclusion=""
+        status="completed"
+
+        if [ "${{ inputs.status }}" = "success" ]; then
+          conclusion="success"
+        elif [ "${{ inputs.status }}" = "failure" ]; then
+          conclusion="failure"
+        elif [ "${{ inputs.status }}" = "in_progress" ]; then
+          status="in_progress"
+        else
+          conclusion="neutral"
+        fi
+
+        echo "conclusion=$conclusion" >> $GITHUB_OUTPUT
+        echo "status=$status" >> $GITHUB_OUTPUT
+
+    - name: "Update Commit Check"
+      if: ${{ github.event_name == 'issue_comment' }}
+      uses: LouisBrunner/checks-action@v2.0.0
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        name: "${{ env.GITHUB_JOB_NAME }}"
+        conclusion: ${{ steps.status.outputs.conclusion }}
+        status: ${{ steps.status.outputs.status }}
+        sha: ${{ steps.head-sha.outputs.sha }}
