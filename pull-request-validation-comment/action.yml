@@ -83,13 +83,17 @@ runs:
           "${{ github.api_url }}/repos/${{ github.repository }}/pulls/${{ inputs.pr_id }}" \
           | jq -r .head.sha)
 
+        echo "Event: ${{ github.event_name }}"
+
         echo "sha=$SHA" >> $GITHUB_OUTPUT
 
     - name: "Update Commit Status"
+      if: ${{ github.event_name != 'pull_request' }}
       uses: actions/github-script@v7
       env:
         PR_ID: ${{ inputs.pr_id }}
-        JOB_NAME: "${{ inputs.workflow_name }} / ${{ env.GITHUB_JOB_NAME }}"
+        # Job name MUST match exactly with the event trigger
+        JOB_NAME: "${{ inputs.workflow_name }} / ${{ env.GITHUB_JOB_NAME }} (pull_request)"
         PR_SHA: ${{ steps.fetch-sha.outputs.sha }}
         STATUS: ${{ inputs.check_status }}
       with:
