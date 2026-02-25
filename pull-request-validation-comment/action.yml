@@ -37,12 +37,12 @@ runs:
             owner: context.repo.owner,
             repo: context.repo.repo,
           });
-          
+
           const botComments = comments.data.filter(comment =>
             comment.user.login === 'github-actions[bot]' &&
             comment.body.includes(process.env.BODY_HEADER)
           );
-          
+
           for (const comment of botComments) {
             await github.rest.issues.deleteComment({
               owner: context.repo.owner,
