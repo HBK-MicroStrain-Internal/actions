@@ -2,15 +2,20 @@ name: "PR Comment Status"
 description: "Updates PR comments with check status, removing old comments and adding failure comments if needed."
 
 inputs:
+  token:
+    description: "The GitHub token to use for authentication"
+    required: true
+    type: string
+
   check_name:
     description: "Unique header string to identify this check's comments"
-    type: string
     required: true
+    type: string
 
   failure_message:
     description: "The message body to post on failure"
-    type: string
     required: true
+    type: string
 
   pr_id:
     description: "Issue ID of the pull request"
@@ -19,8 +24,8 @@ inputs:
 
   check_status:
     description: "The passing status of the job (success or failure)"
-    type: string
     required: true
+    type: string
 
 runs:
   using: "composite"
@@ -69,4 +74,5 @@ runs:
     - name: "Set Completed Status"
       uses: HBK-MicroStrain-Internal/actions/pull-request-commit-check@main
       with:
+        token: ${{ inputs.token }}
         status: ${{ inputs.check_status }}
