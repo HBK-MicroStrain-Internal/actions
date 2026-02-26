@@ -2,6 +2,11 @@ name: "PR Commit Check Status"
 description: "Sets/Updates the check status of a commit for a pull request"
 
 inputs:
+  token:
+    description: "The GitHub token to use for authentication"
+    required: true
+    type: string
+
   status:
     description: "Status of the check. 'success', 'failure', 'in_progress'"
     required: false
@@ -52,20 +57,22 @@ runs:
 
     - name: "Get HEAD Commit SHA"
       id: head-sha
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       shell: bash
       run: |
-        sha=$(gh pr view ${{ steps.pr-metadata.outputs.id }} --json headRefOid -q '.headRefOid')
-        echo "sha=$sha" >> $GITHUB_OUTPUT
+        sha=$(curl -s -H "Authorization: token ${{ github.token }}" \
+          "${{ github.api_url }}/repos/${{ github.repository }}/pulls/${{ steps.pr-metadata.outputs.id }}" \
+          | jq -r .head.sha)
+
+        echo "sha=$SHA" >> $GITHUB_OUTPUT
 
     - name: "Get BASE Commit SHA"
       id: base-sha
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       shell: bash
       run: |
-        sha=$(gh pr view ${{ steps.pr-metadata.outputs.id }} --json baseRefOid -q '.baseRefOid')
+        sha=$(curl -s -H "Authorization: token ${{ github.token }}" \
+          "${{ github.api_url }}/repos/${{ github.repository }}/pulls/${{ steps.pr-metadata.outputs.id }}" \
+          | jq -r .base.sha)
+
         echo "sha=$sha" >> $GITHUB_OUTPUT
 
     - name: "Get Job Info"
@@ -92,12 +99,55 @@ runs:
         echo "conclusion=$conclusion" >> $GITHUB_OUTPUT
         echo "status=$status" >> $GITHUB_OUTPUT
 
-    - name: "Update Commit Check"
-      if: ${{ github.event_name == 'issue_comment' }}
-      uses: LouisBrunner/checks-action@v2.0.0
+    - name: "Set Commit Check Status"
+      uses: actions/github-script@v7
+      env:
+        SHA: ${{ steps.head-sha.outputs.sha }}
+        CHECK_NAME: ${{ env.GITHUB_JOB_NAME }}
+        CONCLUSION: ${{ steps.status.outputs.conclusion }}
+        STATUS: ${{ steps.status.outputs.status }}
       with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        name: "${{ env.GITHUB_JOB_NAME }}"
-        conclusion: ${{ steps.status.outputs.conclusion }}
-        status: ${{ steps.status.outputs.status }}
-        sha: ${{ steps.head-sha.outputs.sha }}
+        github-token: '${{ steps.app-token.outputs.token }}'
+        script: |
+          // Find any existing checks on the commit
+          const { data: checks } = await github.rest.checks.listForRef({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            ref: process.env.SHA
+          });
+
+          // Find this specific check
+          const existing_check = checks.check_runs.find(
+            r => r.name === process.env.CHECK_NAME
+          );
+          
+          // Get the time of update/creation
+          const time = new Date().toISOString();
+
+          // Update this existing check
+          if (existing_check) {
+            await github.rest.checks.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              check_run_id: existing_check.id,
+              status: process.env.STATUS,
+              ...(process.env.STATUS === 'completed' ? {
+                conclusion: process.env.CONCLUSION,
+                completed_at: time
+              } : {
+                started_at: time
+              })
+            });
+          }
+          // Create a new check
+          else
+          {
+            await github.rest.checks.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              name: process.env.CHECK_NAME,
+              head_sha: process.env.SHA,
+              status: process.env.STATUS,
+              started_at: time
+            });
+          }
