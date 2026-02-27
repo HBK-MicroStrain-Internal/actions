@@ -63,7 +63,7 @@ runs:
           "${{ github.api_url }}/repos/${{ github.repository }}/pulls/${{ steps.pr-metadata.outputs.id }}" \
           | jq -r .head.sha)
 
-        echo "sha=$SHA" >> $GITHUB_OUTPUT
+        echo "sha=$sha" >> $GITHUB_OUTPUT
 
     - name: "Get BASE Commit SHA"
       id: base-sha
