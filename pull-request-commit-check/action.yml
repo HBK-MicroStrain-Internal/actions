@@ -3,7 +3,7 @@ description: "Sets/Updates the check status of a commit for a pull request"
 
 inputs:
   token:
-    description: "The GitHub token to use for authentication"
+    description: "The GitHub token to use for commit check authentication"
     required: true
     type: string
 
@@ -59,7 +59,7 @@ runs:
       id: head-sha
       shell: bash
       run: |
-        sha=$(curl -s -H "Authorization: token ${{ inputs.token }}" \
+        sha=$(curl -s -H "Authorization: token ${{ github.token }}" \
           "${{ github.api_url }}/repos/${{ github.repository }}/pulls/${{ steps.pr-metadata.outputs.id }}" \
           | jq -r .head.sha)
 
@@ -69,7 +69,7 @@ runs:
       id: base-sha
       shell: bash
       run: |
-        sha=$(curl -s -H "Authorization: token ${{ inputs.token }}" \
+        sha=$(curl -s -H "Authorization: token ${{ github.token }}" \
           "${{ github.api_url }}/repos/${{ github.repository }}/pulls/${{ steps.pr-metadata.outputs.id }}" \
           | jq -r .base.sha)
 
