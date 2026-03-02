@@ -65,8 +65,8 @@ runs:
         files=$(echo "$all_paths" | tr ' ' '\n' | grep -ivE "((pch|stdafx)\.(h|hpp|cpp)$|(_deps|deps|Libraries)/)" | sort -u)
 
         for relative_path in $files; do
-          # Construct full path to the file (CMake paths in target JSONs are relative to SRC_ROOT)
-          file="$SRC_ROOT/$relative_path"
+          # Construct full path to the file (CMake paths in target JSONs are relative to src_root)
+          file="$src_root/$relative_path"
 
           if [ -f "$file" ]; then
             # Check if the file already has the definition to avoid infinite growth/nesting
