@@ -45,7 +45,7 @@ runs:
         main_code_model=$(ls $reply_dir/codemodel-v2-*.json | head -n 1)
 
         # Get Absolute Source Root from CMake metadata
-        src_root=$(grep -oE '"source"\s*:\s*"[^"]+"' "$main_code_model" | head -n 1 | cut -d'"' -f4)
+        src_root=$(perl -0777 -ne 'if (/"paths"\s*:\s*\{.*?"source"\s*:\s*"([^"]+)"/s) { print $1; exit }' "$main_code_model")
 
         # Find all target JSON files (which contain the actual source lists)
         target_jsons=$(grep -oE '"jsonFile"\s*:\s*"target-[^"]+"' "$main_code_model" | cut -d'"' -f4)
