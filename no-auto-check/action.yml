@@ -92,7 +92,7 @@ runs:
 
               while [ $current_line -le $total_lines ]; do
                 # Extract the content of the current line, trimming whitespace
-                line_content=$(sed -n "${current_line}p" "$file" | xargs)
+                line_content=$(sed -n "${current_line}p" "$file" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
 
                 # Empty line or a comment
                 if [ -z "$line_content" ] || [ "$line_content" == "\/\/"* ]; then
@@ -116,7 +116,7 @@ runs:
 
               if [ -n "$last_line_num" ]; then
                 # Get the content on the last line
-                last_line_content=$(sed -n "${last_line_num}p" "$file" | xargs)
+                last_line_content=$(sed -n "${last_line_num}p" "$file" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
 
                 if [[ "$last_line_content" == "#endif"* ]]; then
                   # It's a header guard. Insert the pop BEFORE the final #endif
