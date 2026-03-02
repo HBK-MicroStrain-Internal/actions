@@ -24,6 +24,15 @@ runs:
         echo "Detected Build Directory: $dir"
         echo "dir=$dir" >> $GITHUB_OUTPUT
 
+        # Seed the File API Query before configuration
+        mkdir -p "$dir/.cmake/api/v1/query"
+        echo '{"requests":[{"kind":"codemodel","version":2}]}' > "$dir/.cmake/api/v1/query/codemodel-v2"
+
+    - name: "Configure The Project"
+      uses: HBK-MicroStrain-Internal/actions/cmake-configure@main
+      with:
+        preset_name: "${{ inputs.configure_preset }}"
+
     - name: "Inject Auto Redefinition"
       shell: bash
       run: |
