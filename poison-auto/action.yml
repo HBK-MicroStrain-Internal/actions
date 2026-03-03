@@ -1,4 +1,4 @@
-name: "Enforce No-Auto"
+name: "Poison The auto Keyword"
 
 inputs:
   configure_preset:
@@ -16,7 +16,7 @@ runs:
         # We search for the specific variable name and clean the output
         dir=$(cmake --preset ${{ inputs.configure_preset }} -N | grep "MICROSTRAIN_BINARY_DIR" | cut -d'=' -f2- | xargs)
 
-        if [ -z "$dir" ]; then
+        if [[ -z "$dir" ]]; then
           echo "Warning: MICROSTRAIN_BINARY_DIR not found. Defaulting to 'build'"
           dir="build"
         fi
@@ -46,7 +46,7 @@ runs:
         # Find all target JSON files (which contain the actual source lists)
         target_jsons=$(grep -oE '"jsonFile"\s*:\s*"target-[^"]+"' "$main_code_model" | cut -d'"' -f4)
 
-        if [ ! -f "$main_code_model" ]; then
+        if [[ ! -f "$main_code_model" ]]; then
           echo "Error: CMake File API reply model not found at ${{ steps.build-dir.outputs.dir }}"
           exit 1
         fi
@@ -69,7 +69,7 @@ runs:
           # Construct full path to the file (CMake paths in target JSONs are relative to src_root)
           file="$src_root/$relative_path"
 
-          if [ -f "$file" ]; then
+          if [[ -f "$file" ]]; then
             # Check if the file already has the definition to avoid infinite growth/nesting
             if grep -Fq "$define_auto" "$file" 2>/dev/null; then
               continue
@@ -78,7 +78,7 @@ runs:
             # Find the line number of the last #include
             last_include=$(grep -nE "^\s*#\s*include" "$file" | tail -n 1 | cut -d: -f1 || true)
 
-            if [ -n "$last_include" ]; then
+            if [[ -n "$last_include" ]]; then
               # Look ahead for trailing #endif directives
               # We start searching from the line after the last include
               insert_line=$last_include
@@ -86,12 +86,12 @@ runs:
 
               current_line=$((last_include + 1))
 
-              while [ $current_line -le $total_lines ]; do
+              while [[ $current_line -le $total_lines ]]; do
                 # Extract the content of the current line, trimming whitespace
                 line_content=$(sed -n "${current_line}p" "$file" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
 
                 # Empty line or a comment
-                if [ -z "$line_content" ] || [ "$line_content" == "\/\/"* ]; then
+                if [[ -z "$line_content" || "$line_content" == "\/\/"* ]]; then
                   current_line=$((current_line + 1))
                   continue
                 # Found a closing directive
@@ -110,7 +110,7 @@ runs:
               # Find the last line in the file to check for ifdef include guards
               last_line_num=$(grep -nE '[^[:space:]]' "$file" | tail -n 1 | cut -d: -f1 || true)
 
-              if [ -n "$last_line_num" ]; then
+              if [[ -n "$last_line_num" ]]; then
                 # Get the content on the last line
                 last_line_content=$(sed -n "${last_line_num}p" "$file" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
 
