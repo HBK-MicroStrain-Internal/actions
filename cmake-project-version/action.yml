@@ -1,0 +1,29 @@
+name: CMake Project Version
+description: Extract the project version from a CMake project
+
+outputs:
+  version:
+    description: The project version extracted from CMakeLists.txt
+    value: ${{ steps.extract-version.outputs.version }}
+
+runs:
+  using: "composite"
+  steps:
+    - id: extract-version
+      shell: bash
+      run: |
+        # Get the version from CMakeLists.txt
+        # CMake is the only source of truth for the version
+        version="v$(sed -n '/project(/,/)/p' CMakeLists.txt |
+          grep -oEi 'VERSION[[:space:]]+["'\'']?([0-9]+\.[0-9]+\.[0-9]+)["'\'']?' |
+          grep -oEi '[0-9]+\.[0-9]+\.[0-9]+')"
+        
+        # Missing or invalid version in the CMakeLists.txt
+        if [ -z "version" ]; then
+          echo "The version field needs to be set for the CMake project"
+          echo "Cannot determine the project version"
+          exit 1
+        fi
+
+        # Return the version
+        echo "version=$version" >> $GITHUB_OUTPUT
