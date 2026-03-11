@@ -14,7 +14,7 @@ runs:
       run: |
         # Get the version from CMakeLists.txt
         # CMake is the only source of truth for the version
-        version="v$(sed -n '/project(/,/)/p' CMakeLists.txt |
+        version="$(sed -n '/project(/,/)/p' CMakeLists.txt |
           grep -oEi 'VERSION[[:space:]]+["'\'']?([0-9]+\.[0-9]+\.[0-9]+)["'\'']?' |
           grep -oEi '[0-9]+\.[0-9]+\.[0-9]+')"
         
