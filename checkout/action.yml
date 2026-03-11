@@ -3,26 +3,39 @@ description: Checkout the repository with recursive submodules and optional GitH
 
 inputs:
   app_id:
-    description: GitHub App ID for private dependencies
+    description: 'GitHub App ID for private dependencies'
     type: string
 
   app_private_key:
-    description: GitHub App private key for private dependencies
+    description: 'GitHub App private key for private dependencies'
     type: string
+
+  fetch_depth:
+    description: 'The depth of the git fetch operation. Set to 0 to fetch all history.'
+    type: number
+    default: 1
 
 runs:
   using: "composite"
   steps:
     - name: "Generate GitHub App Token"
       id: app-token
-      if: ${{ inputs.app_id != '' && inputs.app_private_key != '' }}
+      if: >-
+        ${{
+            inputs.app_id != '' &&
+            inputs.app_private_key != ''
+        }}
       uses: actions/create-github-app-token@v1
       with:
         app-id: ${{ inputs.app_id }}
         private-key: ${{ inputs.app_private_key }}
 
     - name: "Configure Git For Private Dependencies"
-      if: ${{ inputs.app_id != '' && inputs.app_private_key != '' }}
+      if: >-
+        ${{
+            inputs.app_id != '' &&
+            inputs.app_private_key != ''
+        }}
       shell: bash
       run: |
         # Mask the token
@@ -35,3 +48,4 @@ runs:
       uses: actions/checkout@v4
       with:
         submodules: recursive
+        fetch-depth: ${{ inputs.fetch_depth }}
