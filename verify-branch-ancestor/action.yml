@@ -1,0 +1,38 @@
+name: 'Verify Ancestor Branch'
+description: 'Verify BASE is the direct parent of HEAD'
+
+inputs:
+  head_sha:
+    description: 'SHA of the head/current branch'
+    type: string
+    required: true
+
+  base_sha:
+    description: 'SHA of the base branch'
+    type: string
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: 'Check Ancestor Branch'
+      shell: bash
+      run: |
+        # Find the parent branch where the divergence happened for HEAD
+        parent_branch=$(git show-branch | \
+          grep '\*' | \
+          grep -v "${{ inputs.head_sha }}" | \
+          head -1 | \
+          sed 's/.*\[\(.*\)\].*/\1/' | \
+          sed 's/[\^~].*//'))
+        
+        # Get the HEAD SHA of the found parent for comparison
+        parent_sha=$(git rev-parse "$parent_branch")
+        
+        # Check that the HEAD SHA of the parent matches the BASE SHA
+        if [ "$parent_sha" != "${{ inputs.base_sha }}" ]; then
+          echo "BASE is not the direct parent of HEAD"
+          exit 1
+        fi
+        
+        echo "BASE is the direct parent of HEAD"
