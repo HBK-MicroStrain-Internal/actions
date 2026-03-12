@@ -1,0 +1,37 @@
+name: 'Pull Request Checkbox Selection Check'
+description: 'Check whether the checkbox in a pull request message body is checked'
+
+inputs:
+  checkbox_label:
+    description: 'The label next to the checkbox'
+    required: true
+
+outputs:
+  checked:
+    description: 'Whether the checkbox is checked or not'
+    value: ${{ steps.checkbox-state.outputs.checked }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: 'Get Checkbox State'
+      id: checkbox-state
+      shell: bash
+      run: |
+        checked="false"
+        
+        # Only check if the event actor isn't a bot
+        # Defaults to unchecked if it is a bot
+        if [[ "${{ github.actor }}" != "github-actions[bot]" ]]; then
+          pattern="${{ vars.PULL_REQUEST_CHECKED_CHECKBOX }} ${{ inputs.checkbox_label }}"
+  
+          # Get a count of the existing checkbox search pattern
+          # Prevents errors if the checkbox doesn't actually exist
+          count=$(echo "${{ github.event.pull_request.body }}" | grep -cF "${pattern}")
+  
+          if [ "${count}" -gt 0 ]; then
+            checked="true"
+          fi
+        fi
+
+        echo "checked=${checked}" >> $GITHUB_OUTPUT
