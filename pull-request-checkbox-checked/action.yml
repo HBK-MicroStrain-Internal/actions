@@ -17,6 +17,8 @@ runs:
     - name: 'Get Checkbox State'
       id: checkbox-state
       shell: bash
+      env:
+        PR_BODY: ${{ github.event.pull_request.body }}
       run: |
         checked="false"
         
@@ -27,7 +29,7 @@ runs:
   
           # Get a count of the existing checkbox search pattern
           # Prevents errors if the checkbox doesn't actually exist
-          count=$(echo "${{ github.event.pull_request.body }}" | grep -cF "${pattern}")
+          count=$(echo "${PR_BODY}" | grep -cF "${pattern}")
   
           if [ "${count}" -gt 0 ]; then
             checked="true"
