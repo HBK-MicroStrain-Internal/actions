@@ -22,9 +22,6 @@ runs:
       run: |
         checked="false"
         
-        # Debug the PR body for hidden characters
-        echo "${PR_BODY}" | grep -i "changelog release" | xxd
-        
         # Only check if the event actor isn't a bot
         # Defaults to unchecked if it is a bot
         if [[ "${{ github.actor }}" != "github-actions[bot]" ]]; then
@@ -34,7 +31,6 @@ runs:
           # Prevents errors if the checkbox doesn't actually exist
           count=$(echo "${PR_BODY}" | grep -cF -- "${pattern}" || true)
 
-          echo "count=${count}"
           if [[ "${count}" -gt 0 ]]; then
             checked="true"
           fi
