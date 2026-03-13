@@ -23,7 +23,7 @@ runs:
         checked="false"
         
         # Debug the PR body for hidden characters
-        echo "${PR_BODY}" | cat -A | grep -i "changelog release"
+        echo "${PR_BODY}" | grep -i "changelog release" | xxd
         
         # Only check if the event actor isn't a bot
         # Defaults to unchecked if it is a bot
