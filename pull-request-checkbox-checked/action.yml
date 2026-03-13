@@ -33,7 +33,8 @@ runs:
           # Get a count of the existing checkbox search pattern
           # Prevents errors if the checkbox doesn't actually exist
           count=$(echo "${PR_BODY}" | grep -cF -- "${pattern}" || true)
-  
+
+          echo "count=${count}"
           if [[ "${count}" -gt 0 ]]; then
             checked="true"
           fi
