@@ -23,7 +23,7 @@ runs:
         # Only check if the event actor isn't a bot
         # Defaults to unchecked if it is a bot
         if [[ "${{ github.actor }}" != "github-actions[bot]" ]]; then
-          pattern="${{ vars.PULL_REQUEST_CHECKED_CHECKBOX }} ${{ inputs.checkbox_label }}"
+          pattern="- [x] ${{ inputs.checkbox_label }}"
   
           # Get a count of the existing checkbox search pattern
           # Prevents errors if the checkbox doesn't actually exist
